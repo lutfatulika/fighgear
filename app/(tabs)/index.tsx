@@ -1,98 +1,180 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useFonts } from 'expo-font';
+import { Bell } from 'lucide-react-native';
+import { Image, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, fontType } from '../../assets/theme';
+import ListBlog from '../../src/components/ListBlog';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function App() {
 
-export default function HomeScreen() {
+  const [loaded] = useFonts(fontType);
+
+  if (!loaded) {
+    return null;
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.white()} />
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>FIGHTGEAR</Text>
+          <Text style={styles.subtitle}>
+            Katalog Alat Beladiri 🥊
+          </Text>
+        </View>
+
+        <Bell color={colors.black()} size={24} />
+      </View>
+
+      {/* 🔥 KATEGORI */}
+      <View style={styles.listCategory}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+
+          <View style={{ ...category.item, marginLeft: 24, backgroundColor: colors.blue() }}>
+            <Text style={{ ...category.title, color: colors.white() }}>
+              Boxing
+            </Text>
+          </View>
+
+          <View style={category.item}>
+            <Text style={category.title}>Karate</Text>
+          </View>
+
+          <View style={category.item}>
+            <Text style={category.title}>Taekwondo</Text>
+          </View>
+
+        </ScrollView>
+      </View>
+
+      {/* 🔥 BANNER WELCOME (INI YANG DITAMBAH) */}
+      <View style={styles.bannerContainer}>
+        <Image
+          source={{ uri: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed" }}
+          style={styles.bannerImage}
+        />
+
+        {/* OVERLAY TEXT */}
+        <View style={styles.bannerOverlay}>
+          <Text style={styles.bannerTitle}>
+            Selamat Datang 👋
+          </Text>
+          <Text style={styles.bannerText}>
+            Temukan perlengkapan terbaik untuk latihanmu di FightGear!
+          </Text>
+        </View>
+      </View>
+
+      {/* JUDUL */}
+      <Text style={styles.sectionTitle}>
+        Produk Terpopuler 🔥
+      </Text>
+
+      {/* LIST */}
+      <ListBlog styles={styles} />
+
+    </SafeAreaView>
   );
 }
 
+
+// ==========================
+// 🔽 STYLE UTAMA
+// ==========================
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: colors.white(),
+  },
+
+  header: {
+    paddingHorizontal: 24,
+    justifyContent: 'space-between',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginTop: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+
+  title: {
+    fontSize: 20,
+    fontFamily: "Pjs-Bold",
+    color: colors.black(),
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
+
+  subtitle: {
+    fontSize: 12,
+    fontFamily: "Pjs-Medium",
+    color: colors.grey(),
+  },
+
+  listCategory: {
+    marginTop: 15,
+  },
+
+  sectionTitle: {
+    marginHorizontal: 24,
+    marginTop: 20,
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+
+  // 🔥 STYLE BANNER BARU
+  bannerContainer: {
+    marginHorizontal: 24,
+    marginTop: 15,
+    borderRadius: 15,
+    overflow: "hidden", // biar rounded kena image
+  },
+
+  bannerImage: {
+    width: "100%",
+    height: 150,
+  },
+
+  bannerOverlay: {
+    position: "absolute",
+    top: 0,
     left: 0,
-    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.4)", // 🔥 overlay gelap
+    justifyContent: "center",
+    padding: 15,
+  },
+
+  bannerTitle: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "Pjs-Bold",
+  },
+
+  bannerText: {
+    color: "#fff",
+    fontSize: 12,
+    fontFamily: "Pjs-Medium",
+    marginTop: 5,
+  },
+});
+
+
+// ==========================
+// 🔽 CATEGORY STYLE
+// ==========================
+const category = StyleSheet.create({
+  item: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: colors.grey(0.2),
+    borderRadius: 20,
+    marginRight: 10,
+  },
+
+  title: {
+    fontSize: 12,
+    fontFamily: "Pjs-SemiBold",
+    color: colors.black(),
   },
 });
