@@ -1,5 +1,6 @@
 import { useFonts } from 'expo-font';
 import { Bell } from 'lucide-react-native';
+import { useState } from "react"; // ✅ TAMBAHAN STATE
 import { Image, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontType } from '../../assets/theme';
@@ -8,6 +9,9 @@ import ListBlog from '../../src/components/ListBlog';
 export default function App() {
 
   const [loaded] = useFonts(fontType);
+
+  // ✅ STATE: menyimpan kategori yang dipilih
+  const [selectedCategory, setSelectedCategory] = useState("Boxing");
 
   if (!loaded) {
     return null;
@@ -29,35 +33,42 @@ export default function App() {
         <Bell color={colors.black()} size={24} />
       </View>
 
-      {/* 🔥 KATEGORI */}
+      {/* 🔥 KATEGORI (SUDAH DINAMIS + STATE) */}
       <View style={styles.listCategory}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
 
-          <View style={{ ...category.item, marginLeft: 24, backgroundColor: colors.blue() }}>
-            <Text style={{ ...category.title, color: colors.white() }}>
-              Boxing
-            </Text>
-          </View>
+          {/* ✅ LOOP CATEGORY + INTERAKSI */}
+          {["Boxing", "Karate", "Taekwondo"].map((item, index) => {
+            const isActive = item === selectedCategory; // cek aktif
 
-          <View style={category.item}>
-            <Text style={category.title}>Karate</Text>
-          </View>
-
-          <View style={category.item}>
-            <Text style={category.title}>Taekwondo</Text>
-          </View>
+            return (
+              <Text
+                key={index}
+                onPress={() => setSelectedCategory(item)} // ✅ UBAH STATE
+                style={{
+                  marginLeft: index === 0 ? 24 : 10,
+                  paddingVertical: 8,
+                  paddingHorizontal: 16,
+                  backgroundColor: isActive ? colors.blue() : colors.grey(0.2),
+                  borderRadius: 20,
+                  color: isActive ? "white" : "black",
+                }}
+              >
+                {item}
+              </Text>
+            );
+          })}
 
         </ScrollView>
       </View>
 
-      {/* 🔥 BANNER WELCOME (INI YANG DITAMBAH) */}
+      {/* 🔥 BANNER */}
       <View style={styles.bannerContainer}>
         <Image
           source={{ uri: "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed" }}
           style={styles.bannerImage}
         />
 
-        {/* OVERLAY TEXT */}
         <View style={styles.bannerOverlay}>
           <Text style={styles.bannerTitle}>
             Selamat Datang 👋
@@ -73,8 +84,11 @@ export default function App() {
         Produk Terpopuler 🔥
       </Text>
 
-      {/* LIST */}
-      <ListBlog styles={styles} />
+      {/* ✅ PROPS DIKIRIM KE ListBlog */}
+      <ListBlog
+        styles={styles}
+        category={selectedCategory} // ✅ FIX BUG KOSONG
+      />
 
     </SafeAreaView>
   );
@@ -121,12 +135,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  // 🔥 STYLE BANNER BARU
+  // 🔥 STYLE BANNER
   bannerContainer: {
     marginHorizontal: 24,
     marginTop: 15,
     borderRadius: 15,
-    overflow: "hidden", // biar rounded kena image
+    overflow: "hidden",
   },
 
   bannerImage: {
@@ -140,7 +154,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.4)", // 🔥 overlay gelap
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     padding: 15,
   },
@@ -156,25 +170,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Pjs-Medium",
     marginTop: 5,
-  },
-});
-
-
-// ==========================
-// 🔽 CATEGORY STYLE
-// ==========================
-const category = StyleSheet.create({
-  item: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: colors.grey(0.2),
-    borderRadius: 20,
-    marginRight: 10,
-  },
-
-  title: {
-    fontSize: 12,
-    fontFamily: "Pjs-SemiBold",
-    color: colors.black(),
   },
 });
