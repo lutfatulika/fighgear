@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { FlatList, Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import products from '../products';
 import { colors } from '../../../assets/theme';
@@ -9,7 +9,16 @@ import { colors } from '../../../assets/theme';
 export default function HomeScreen() {
     const navigation = useNavigation();
 
+    const [search, setSearch] = useState('');
+
     const recommendedProducts = [...products].sort((a, b) => b.rating - a.rating).slice(0, 4);
+
+    const filteredProducts = search.trim() === ''
+        ? recommendedProducts
+        : products.filter(item =>
+            item.name.toLowerCase().includes(search.toLowerCase()) ||
+            item.category.toLowerCase().includes(search.toLowerCase())
+        );
 
     const renderProductCard = ({ item }) => (
         <TouchableOpacity
@@ -41,16 +50,42 @@ export default function HomeScreen() {
             <StatusBar barStyle="light-content" backgroundColor={colors.background} />
 
             <ScrollView showsVerticalScrollIndicator={false}>
+
+                {/* HEADER */}
                 <View style={styles.header}>
                     <View>
                         <Text style={styles.headerTitle}>FIGHTGEAR</Text>
                         <Text style={styles.headerSubtitle}>Katalog Alat Beladiri ⚡</Text>
                     </View>
-                    <View style={styles.headerIcon}>
-                        <Ionicons name="shield" size={28} color={colors.secondary} />
-                    </View>
+
+                    {/* ─── TOMBOL + TAMBAH PRODUK ─────────────────────────────── */}
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={() => navigation.navigate('AddBlogForm')}
+                    >
+                        <Ionicons name="add" size={22} color={colors.primary} />
+                    </TouchableOpacity>
+                    {/* ─────────────────────────────────────────────────────────── */}
                 </View>
 
+                {/* SEARCH BAR */}
+                <View style={styles.searchContainer}>
+                    <Ionicons name="search-outline" size={18} color="#666" style={styles.searchIcon} />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Cari produk fighting gear..."
+                        placeholderTextColor="#666"
+                        value={search}
+                        onChangeText={setSearch}
+                    />
+                    {search.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearch('')}>
+                            <Ionicons name="close-circle" size={18} color="#666" />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* BANNER */}
                 <View style={styles.bannerContainer}>
                     <View style={styles.banner}>
                         <Text style={styles.bannerTitle}>Champion's Choice</Text>
@@ -62,22 +97,35 @@ export default function HomeScreen() {
                     </View>
                 </View>
 
+                {/* SECTION REKOMENDASI */}
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>💪 Rekomendasi Untukmu</Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Discover')}>
-                        <Text style={styles.seeAll}>Lihat Semua →</Text>
-                    </TouchableOpacity>
+                    <Text style={styles.sectionTitle}>
+                        {search.trim() === '' ? '💪 Rekomendasi Untukmu' : '🔍 Hasil Pencarian'}
+                    </Text>
+                    {search.trim() === '' && (
+                        <TouchableOpacity onPress={() => navigation.navigate('Discover')}>
+                            <Text style={styles.seeAll}>Lihat Semua →</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
-                <FlatList
-                    horizontal
-                    data={recommendedProducts}
-                    renderItem={renderProductCard}
-                    keyExtractor={(item) => item.id.toString()}
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.recommendedList}
-                />
+                {filteredProducts.length === 0 ? (
+                    <View style={styles.emptySearch}>
+                        <Ionicons name="search" size={40} color="#444" />
+                        <Text style={styles.emptyText}>Produk tidak ditemukan</Text>
+                    </View>
+                ) : (
+                    <FlatList
+                        horizontal
+                        data={filteredProducts}
+                        renderItem={renderProductCard}
+                        keyExtractor={(item) => item.id.toString()}
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.recommendedList}
+                    />
+                )}
 
+                {/* KATEGORI */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>🏷️ Kategori Populer</Text>
                 </View>
@@ -110,6 +158,7 @@ export default function HomeScreen() {
                         <Text style={styles.categoryCardDesc}>Apparel</Text>
                     </TouchableOpacity>
                 </View>
+
             </ScrollView>
         </SafeAreaView>
     );
@@ -126,7 +175,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingTop: 10,
-        paddingBottom: 20,
+        paddingBottom: 16,
     },
     headerTitle: {
         fontSize: 28,
@@ -139,15 +188,46 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
         marginTop: 2,
     },
-    headerIcon: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: colors.card,
+
+    // ─── Tombol Tambah Produk ──────────────────────────────────────────────────
+    addButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: colors.secondary,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    // ──────────────────────────────────────────────────────────────────────────
+
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#2a2a2a',
+        marginHorizontal: 20,
+        marginBottom: 20,
+        borderRadius: 12,
+        paddingHorizontal: 14,
         borderWidth: 1,
         borderColor: colors.secondary + '30',
+    },
+    searchIcon: {
+        marginRight: 8,
+    },
+    searchInput: {
+        flex: 1,
+        height: 46,
+        color: '#fff',
+        fontSize: 14,
+    },
+    emptySearch: {
+        alignItems: 'center',
+        paddingVertical: 30,
+    },
+    emptyText: {
+        color: '#555',
+        marginTop: 10,
+        fontSize: 14,
     },
     bannerContainer: {
         paddingHorizontal: 20,

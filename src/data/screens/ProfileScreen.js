@@ -1,12 +1,51 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import {
+    ScrollView, StatusBar, StyleSheet, Text,
+    TouchableOpacity, View, ActivityIndicator, RefreshControl
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../../../assets/theme';
+import axios from 'axios';
+
+const BASE_URL = 'https://6a09dba3e7e3f433d48382fb.mockapi.io';
 
 export default function ProfileScreen() {
     const navigation = useNavigation();
+
+    // ─── State GET API ─────────────────────────────────────────────────────────
+    const [apiProducts, setApiProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    // ─── GET: Ambil data produk dari MockAPI ───────────────────────────────────
+    const getDataProducts = async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/products`);
+            setApiProducts(response.data);
+            setLoading(false);
+        } catch (error) {
+            console.error('GET Error:', error);
+            setLoading(false);
+        }
+    };
+
+    // Refresh pull down
+    const onRefresh = useCallback(() => {
+        setRefreshing(true);
+        setTimeout(() => {
+            getDataProducts();
+            setRefreshing(false);
+        }, 1500);
+    }, []);
+
+    // Otomatis GET setiap kali screen difokus
+    useFocusEffect(
+        useCallback(() => {
+            getDataProducts();
+        }, [])
+    );
 
     const menuItems = [
         { icon: 'heart-outline', title: 'Favorite Saya', value: '3 alat', route: 'Bookmark' },
@@ -19,7 +58,12 @@ export default function ProfileScreen() {
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={colors.background} />
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }
+            >
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Profil Saya</Text>
                 </View>
@@ -48,6 +92,48 @@ export default function ProfileScreen() {
                         <Text style={styles.statLabel}>Kategori</Text>
                     </View>
                 </View>
+
+                {/* ─── SECTION GET + EDIT API ───────────────────────────────── */}
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>📦 Produk dari API</Text>
+                    <Text style={styles.sectionCount}>{apiProducts.length} produk</Text>
+                </View>
+
+                {loading ? (
+                    <ActivityIndicator
+                        size="large"
+                        color={colors.secondary}
+                        style={{ marginVertical: 20 }}
+                    />
+                ) : apiProducts.length === 0 ? (
+                    <View style={styles.emptyContainer}>
+                        <Ionicons name="cube-outline" size={40} color="#444" />
+                        <Text style={styles.emptyText}>Belum ada produk di API</Text>
+                        <Text style={styles.emptySubText}>Tambah produk dulu via tombol +</Text>
+                    </View>
+                ) : (
+                    apiProducts.map((item, index) => (
+                        <View key={index} style={styles.apiProductItem}>
+                            <View style={styles.apiProductLeft}>
+                                <Ionicons name="shield-outline" size={20} color={colors.secondary} />
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.apiProductName}>{item.name}</Text>
+                                    <Text style={styles.apiProductCategory}>{item.category}</Text>
+                                    <Text style={styles.apiProductPrice}>{item.priceRange}</Text>
+                                </View>
+                            </View>
+                            {/* ─── TOMBOL EDIT → ke EditBlogForm ─── */}
+                            <TouchableOpacity
+                                style={styles.editBtn}
+                                onPress={() => navigation.navigate('EditBlogForm', { productId: item.id })}
+                            >
+                                <Ionicons name="create-outline" size={16} color={colors.primary} />
+                                <Text style={styles.editBtnText}>Edit</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))
+                )}
+                {/* ─────────────────────────────────────────────────────────────── */}
 
                 <View style={styles.menuContainer}>
                     {menuItems.map((item, index) => (
@@ -112,9 +198,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.secondary,
     },
-    avatarEmoji: {
-        fontSize: 50,
-    },
+    avatarEmoji: { fontSize: 50 },
     userName: {
         fontSize: 20,
         fontWeight: 'bold',
@@ -136,10 +220,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.secondary + '20',
     },
-    statItem: {
-        alignItems: 'center',
-        flex: 1,
-    },
+    statItem: { alignItems: 'center', flex: 1 },
     statNumber: {
         fontSize: 22,
         fontWeight: 'bold',
@@ -154,6 +235,88 @@ const styles = StyleSheet.create({
         width: 1,
         backgroundColor: colors.secondary + '30',
     },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+        marginBottom: 12,
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: colors.text,
+    },
+    sectionCount: {
+        fontSize: 12,
+        color: colors.secondary,
+    },
+    emptyContainer: {
+        alignItems: 'center',
+        paddingVertical: 24,
+        marginHorizontal: 24,
+        backgroundColor: colors.card,
+        borderRadius: 16,
+        marginBottom: 24,
+    },
+    emptyText: {
+        color: '#666',
+        marginTop: 10,
+        fontSize: 14,
+    },
+    emptySubText: {
+        color: '#444',
+        fontSize: 12,
+        marginTop: 4,
+    },
+    apiProductItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: colors.card,
+        marginHorizontal: 24,
+        marginBottom: 8,
+        borderRadius: 12,
+        padding: 14,
+        borderWidth: 1,
+        borderColor: colors.secondary + '20',
+    },
+    apiProductLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        flex: 1,
+    },
+    apiProductName: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: colors.text,
+    },
+    apiProductCategory: {
+        fontSize: 11,
+        color: colors.textSecondary,
+        marginTop: 2,
+    },
+    apiProductPrice: {
+        fontSize: 11,
+        color: colors.secondary,
+        fontWeight: '600',
+        marginTop: 2,
+    },
+    editBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: colors.secondary,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+        borderRadius: 8,
+    },
+    editBtnText: {
+        color: colors.primary,
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
     menuContainer: {
         marginHorizontal: 24,
         backgroundColor: colors.card,
@@ -161,6 +324,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.secondary + '20',
         overflow: 'hidden',
+        marginTop: 8,
     },
     menuItem: {
         flexDirection: 'row',
