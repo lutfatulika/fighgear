@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useEffect } from 'react';
+import React, { useContext, useRef, useEffect, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import {
     Animated,
@@ -7,8 +7,10 @@ import {
     StatusBar,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,28 +27,24 @@ export default function DetailScreen() {
     const product = products.find((item) => item.id.toString() === id.toString());
     const isBookmarked = savedItems.find(i => i.id.toString() === id.toString());
 
-    // Animasi fade in gambar
-    const imageOpacity = useRef(new Animated.Value(0)).current;
+    // ─── State Form Komentar ───────────────────────────────────────────────────
+    const [komentar, setKomentar] = useState('');
+    const [daftarKomentar, setDaftarKomentar] = useState([]);
 
-    // Animasi slide from bottom untuk konten
+    // Animasi
+    const imageOpacity = useRef(new Animated.Value(0)).current;
     const contentSlide = useRef(new Animated.Value(80)).current;
     const contentOpacity = useRef(new Animated.Value(0)).current;
-
-    // Animasi scale tombol bookmark
     const bookmarkScale = useRef(new Animated.Value(1)).current;
-
-    // Animasi scale tombol buy
     const buyScale = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-        // Gambar fade in lebih dulu
         Animated.timing(imageOpacity, {
             toValue: 1,
             duration: 500,
             useNativeDriver: true,
         }).start();
 
-        // Konten slide from bottom setelah gambar
         Animated.parallel([
             Animated.timing(contentSlide, {
                 toValue: 0,
@@ -63,37 +61,35 @@ export default function DetailScreen() {
         ]).start();
     }, []);
 
-    // Animasi tombol bookmark saat ditekan
     const handleBookmarkPress = () => {
         Animated.sequence([
-            Animated.spring(bookmarkScale, {
-                toValue: 1.4,
-                friction: 3,
-                useNativeDriver: true,
-            }),
-            Animated.spring(bookmarkScale, {
-                toValue: 1,
-                friction: 3,
-                useNativeDriver: true,
-            }),
+            Animated.spring(bookmarkScale, { toValue: 1.4, friction: 3, useNativeDriver: true }),
+            Animated.spring(bookmarkScale, { toValue: 1, friction: 3, useNativeDriver: true }),
         ]).start();
         toggleSave(product);
     };
 
-    // Animasi tombol buy saat ditekan
     const handleBuyPressIn = () => {
-        Animated.spring(buyScale, {
-            toValue: 0.95,
-            useNativeDriver: true,
-        }).start();
+        Animated.spring(buyScale, { toValue: 0.95, useNativeDriver: true }).start();
     };
 
     const handleBuyPressOut = () => {
-        Animated.spring(buyScale, {
-            toValue: 1,
-            friction: 3,
-            useNativeDriver: true,
-        }).start();
+        Animated.spring(buyScale, { toValue: 1, friction: 3, useNativeDriver: true }).start();
+    };
+
+    // ─── Handler Simpan Komentar ───────────────────────────────────────────────
+    const handleSimpanKomentar = () => {
+        if (!komentar.trim()) {
+            Alert.alert('Oops!', 'Komentar tidak boleh kosong.');
+            return;
+        }
+        const komentarBaru = {
+            id: Date.now(),
+            teks: komentar.trim(),
+            waktu: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+        };
+        setDaftarKomentar(prev => [komentarBaru, ...prev]);
+        setKomentar('');
     };
 
     if (!product) {
@@ -115,21 +111,13 @@ export default function DetailScreen() {
             <StatusBar barStyle="light-content" backgroundColor={colors.background} />
 
             <ScrollView>
-                {/* Gambar dengan fade in */}
+                {/* Gambar */}
                 <Animated.View style={[styles.imageContainer, { opacity: imageOpacity }]}>
                     <Image source={product.image} style={styles.image} />
-
-                    {/* Tombol back */}
                     <TouchableOpacity style={styles.backIcon} onPress={() => navigation.goBack()}>
                         <Ionicons name="arrow-back" size={24} color={colors.text} />
                     </TouchableOpacity>
-
-                    {/* Tombol bookmark dengan scale bounce */}
-                    <TouchableOpacity
-                        style={styles.bookmarkIcon}
-                        onPress={handleBookmarkPress}
-                        activeOpacity={1}
-                    >
+                    <TouchableOpacity style={styles.bookmarkIcon} onPress={handleBookmarkPress} activeOpacity={1}>
                         <Animated.View style={{ transform: [{ scale: bookmarkScale }] }}>
                             <Ionicons
                                 name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
@@ -140,15 +128,9 @@ export default function DetailScreen() {
                     </TouchableOpacity>
                 </Animated.View>
 
-                {/* Konten dengan slide from bottom */}
+                {/* Konten */}
                 <Animated.View
-                    style={[
-                        styles.content,
-                        {
-                            opacity: contentOpacity,
-                            transform: [{ translateY: contentSlide }],
-                        },
-                    ]}
+                    style={[styles.content, { opacity: contentOpacity, transform: [{ translateY: contentSlide }] }]}
                 >
                     <Text style={styles.name}>{product.name}</Text>
                     <Text style={styles.category}>{product.category} • {product.subCategory}</Text>
@@ -177,7 +159,7 @@ export default function DetailScreen() {
                         </>
                     )}
 
-                    {/* Tombol buy dengan scale saat ditekan */}
+                    {/* Tombol Buy */}
                     <Animated.View style={{ transform: [{ scale: buyScale }] }}>
                         <TouchableOpacity
                             style={styles.buyButton}
@@ -189,6 +171,47 @@ export default function DetailScreen() {
                             <Text style={styles.buyButtonText}>Lihat Link Pembelian</Text>
                         </TouchableOpacity>
                     </Animated.View>
+
+                    {/* ─── FORM KOMENTAR ─────────────────────────────────────── */}
+                    <View style={styles.divider} />
+
+                    <Text style={styles.sectionTitle}>Komentar Anda:</Text>
+
+                    <TextInput
+                        style={styles.commentInput}
+                        placeholder={`Tulis komentar tentang ${product.name}...`}
+                        placeholderTextColor="#666"
+                        value={komentar}
+                        onChangeText={setKomentar}
+                        multiline={true}
+                        numberOfLines={4}
+                    />
+
+                    <TouchableOpacity style={styles.commentButton} onPress={handleSimpanKomentar}>
+                        <Ionicons name="chatbubble-outline" size={18} color={colors.primary} />
+                        <Text style={styles.commentButtonText}>Simpan Komentar</Text>
+                    </TouchableOpacity>
+
+                    {/* ─── DAFTAR KOMENTAR ───────────────────────────────────── */}
+                    {daftarKomentar.length > 0 && (
+                        <View style={styles.komentarList}>
+                            <Text style={styles.sectionTitle}>
+                                💬 Komentar ({daftarKomentar.length})
+                            </Text>
+                            {daftarKomentar.map((item) => (
+                                <View key={item.id} style={styles.komentarItem}>
+                                    <View style={styles.komentarHeader}>
+                                        <Ionicons name="person-circle-outline" size={20} color={colors.secondary} />
+                                        <Text style={styles.komentarUser}>Pengguna</Text>
+                                        <Text style={styles.komentarWaktu}>{item.waktu}</Text>
+                                    </View>
+                                    <Text style={styles.komentarTeks}>{item.teks}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
+                    {/* ─────────────────────────────────────────────────────────── */}
+
                 </Animated.View>
             </ScrollView>
         </SafeAreaView>
@@ -295,12 +318,72 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         borderRadius: 12,
         marginTop: 24,
-        marginBottom: 30,
+        marginBottom: 10,
     },
     buyButtonText: {
         color: colors.primary,
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    commentInput: {
+        backgroundColor: '#2a2a2a',
+        borderRadius: 12,
+        padding: 14,
+        color: '#fff',
+        fontSize: 14,
+        borderWidth: 1,
+        borderColor: colors.secondary + '40',
+        textAlignVertical: 'top',
+        minHeight: 100,
+        marginBottom: 12,
+    },
+    commentButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        backgroundColor: colors.secondary,
+        paddingVertical: 13,
+        borderRadius: 12,
+        marginBottom: 16,
+    },
+    commentButtonText: {
+        color: colors.primary,
+        fontSize: 15,
+        fontWeight: 'bold',
+    },
+    komentarList: {
+        marginTop: 8,
+        marginBottom: 30,
+    },
+    komentarItem: {
+        backgroundColor: '#2a2a2a',
+        borderRadius: 12,
+        padding: 14,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: colors.secondary + '20',
+    },
+    komentarHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 8,
+    },
+    komentarUser: {
+        fontSize: 13,
+        fontWeight: 'bold',
+        color: colors.text,
+        flex: 1,
+    },
+    komentarWaktu: {
+        fontSize: 11,
+        color: '#666',
+    },
+    komentarTeks: {
+        fontSize: 13,
+        color: colors.textSecondary,
+        lineHeight: 20,
     },
     notFound: {
         flex: 1,
