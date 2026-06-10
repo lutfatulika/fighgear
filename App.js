@@ -6,16 +6,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-
-// ✅ BENAR sesuai struktur folder
 import HomeScreen from './src/data/screens/HomeScreen';
 import DiscoverScreen from './src/data/screens/DiscoverScreen';
 import BookmarkScreen from './src/data/screens/BookmarkScreen';
 import ProfileScreen from './src/data/screens/ProfileScreen';
 import DetailScreen from './src/data/screens/DetailScreen';
+import AddBlogForm from './src/data/screens/AddBlogForm';
+import EditBlogForm from './src/data/screens/EditBlogForm';
 
 import { SavedProvider } from './src/context/SavedContext';
-import { products } from './src/data/products';
 import { colors } from './assets/theme';
 
 const Tab = createBottomTabNavigator();
@@ -91,6 +90,8 @@ function MainStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={TabNavigator} />
       <Stack.Screen name="Detail" component={DetailScreen} />
+      <Stack.Screen name="AddBlogForm" component={AddBlogForm} />
+      <Stack.Screen name="EditBlogForm" component={EditBlogForm} />
     </Stack.Navigator>
   );
 }
